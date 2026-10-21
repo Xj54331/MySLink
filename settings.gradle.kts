@@ -33,6 +33,5 @@ dependencyResolutionManagement {
 rootProject.name = "SonnyApp"
 
 include(":app")
-include(":core-protocol")
-include(":core-liveview")
 include(":core-dlna")
+include(":core-import")

@@ -1,29 +1,25 @@
 package com.sonnyapp.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-
-enum class AppMode { MENU, REMOTE, GALLERY }
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sonnyapp.device.DeviceViewModel
 
 /**
- * 顶层导航（只有三个页面，不需要导航库）。
+ * 顶层：未连接相机 -> 连接引导页；已连接 -> 双 Tab 主界面。
  *
- * 从某个模式返回菜单时**必须断开相机连接** ——
- * 相机一次只能跑一种模式（遥控 或 DLNA），留着旧连接会干扰新模式。
- * 断开动作在各页面自己的 onBack 里做（它们才持有 ViewModel）。
+ * 不再有「遥控 / 传输」模式选择页 —— 遥控已整体移除，
+ * App 只做照片导入这一件事（相机端固定在「发送到智能手机」模式）。
  */
 @Composable
 fun AppRoot() {
-    var mode by remember { mutableStateOf(AppMode.MENU) }
-    when (mode) {
-        AppMode.MENU -> MenuScreen(
-            onRemote = { mode = AppMode.REMOTE },
-            onGallery = { mode = AppMode.GALLERY },
-        )
-        AppMode.REMOTE -> CameraScreen(onBack = { mode = AppMode.MENU })
-        AppMode.GALLERY -> GalleryScreen(onBack = { mode = AppMode.MENU })
+    val vm: DeviceViewModel = viewModel()
+    val connected by vm.connected.collectAsState()
+
+    if (connected) {
+        MainTabs(deviceVm = vm)
+    } else {
+        ConnectScreen(vm)
     }
 }

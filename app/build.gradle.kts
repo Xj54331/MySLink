@@ -1,9 +1,9 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
-  alias(libs.plugins.kotlin.serialization)
 }
 
 // 发布签名材料放在 keystore.properties（不进 git）。
@@ -17,13 +17,16 @@ val keystoreProps = Properties().apply {
 
 android {
     namespace = "com.sonnyapp"
+    // compileSdk 36：androidx.core 1.18 / compose 1.10 系列硬性要求 >= 36。
+    // targetSdk 与之解耦（保持 34，控制运行时行为变更风险）；
+    // ACCESS_LOCAL_NETWORK 等新权限以字符串形式声明，运行时按设备系统版本生效。
     compileSdk = 36
     defaultConfig {
         applicationId = "com.sonnyapp"
         minSdk = 29
-        targetSdk = 36
-        versionCode = 6
-        versionName = "1.1.4"
+        targetSdk = 34
+        versionCode = 7
+        versionName = "2.0.0"
     }
 
     signingConfigs {
@@ -72,14 +75,16 @@ android {
 }
 
 kotlin {
-    jvmToolchain(17)
+    // 本机无 JDK 17：由任意本机 JDK 编译，显式输出 17 字节码（与 compileOptions 对齐）。
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 dependencies {
   // 本地纯 Kotlin 模块（不依赖 Android，可独立做 JVM 单元测试）
-  implementation(project(":core-protocol"))
-  implementation(project(":core-liveview"))
   implementation(project(":core-dlna"))
+  implementation(project(":core-import"))
 
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)
@@ -113,9 +118,4 @@ dependencies {
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.androidx.test.espresso.core)
-
-  // Navigation
-  implementation(libs.androidx.navigation3.ui)
-  implementation(libs.androidx.navigation3.runtime)
-  implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 }

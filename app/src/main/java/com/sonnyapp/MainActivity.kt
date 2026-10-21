@@ -3,7 +3,6 @@ package com.sonnyapp
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,11 +18,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // 取景时不要息屏
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-        // 刷新率：平常跑屏幕上限，取景时降到 60Hz（见 RefreshRate 的说明）。
-        RefreshRate.attach(window)
 
         // Android 16/17 的局域网访问权限。
         // 在 Android 17 上它对应 appop ACCESS_LOCAL_NETWORK；

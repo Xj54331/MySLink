@@ -31,7 +31,7 @@ jobs:
           restore-keys: gradle-
 
       - name: Run unit tests
-        run: ./gradlew :core-protocol:test :core-liveview:test :core-dlna:test
+        run: ./gradlew :core-dlna:test :core-import:test
 
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug
