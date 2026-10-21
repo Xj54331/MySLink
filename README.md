@@ -103,7 +103,7 @@ v2.0 聚焦「照片导入」这一件事，**整体移除了实时取景 / 遥�
 需要 **JDK 17+**（任意较新 JDK 均可，项目显式输出 17 字节码）和 Android SDK（compileSdk 34）。
 
 ```bash
-# 单元测试（core-dlna + core-import，共 82 个）
+# 单元测试（core-dlna + core-import，共 59 个）
 ./gradlew :core-dlna:test :core-import:test
 
 # Debug 包

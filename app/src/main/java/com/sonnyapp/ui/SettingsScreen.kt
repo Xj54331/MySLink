@@ -151,6 +151,24 @@ fun SettingsScreen(
                 )
             }
 
+            Spacer(Modifier.height(10.dp))
+
+            SectionTitle("连接")
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Ink1)
+                    .padding(16.dp)
+                    .clickable {
+                        vm.disconnect()
+                        onBack()
+                    },
+            ) {
+                Text("断开相机", color = com.sonnyapp.theme.ErrorRed, fontSize = 13.5.sp)
+                Text(
+                    "结束本次会话；导入队列中未完成的任务会标记失败，重连后可重试（已成功的自动去重）",
+                    color = TextLo, fontSize = 10.sp,
+                )
+            }
+
             Spacer(Modifier.height(24.dp))
             Text(
                 "SonnyLink 2.0 · 照片导入版\n第三方非官方软件，与索尼公司无任何关联\n仅用于连接你自己拥有的相机",
