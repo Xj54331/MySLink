@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SonnyLink 暗房 · UI 演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink-bg:#0C0C0E; --ink-s1:#17171A; --ink-s2:#1E1E22; --ink-s3:#26262B;
+  --text-hi:#F2EFE9; --text-mid:#B9B4AA; --text-lo:#8E8A82;
+  --accent:#E8A33D; --accent-dim:#8a6224; --ok:#7BC96F; --danger:#E2574C;
+  --line:rgba(242,239,233,.07);
+  --serif:"Noto Serif SC", "Songti SC", serif;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"IBM Plex Mono","Cascadia Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--sans); color:var(--text-hi); background:var(--ink-bg);
+  display:flex; align-items:center; justify-content:center; gap:72px; padding:40px;
+  overflow-x:hidden;
+  background-image:
+    radial-gradient(900px 600px at 12% 0%, rgba(232,163,61,.05), transparent 60%),
+    radial-gradient(700px 700px at 100% 100%, rgba(123,201,111,.03), transparent 60%);
+}
+body::after{ /* grain */
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.05; z-index:99;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+
+/* ---------- 左侧说明栏 ---------- */
+.brief{max-width:360px}
+.brief .wordmark{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--accent);margin-bottom:18px}
+.brief h1{font-family:var(--serif);font-size:56px;font-weight:600;line-height:1.1;letter-spacing:.04em}
+.brief h1 em{font-style:normal;color:var(--accent);display:block;font-size:.52em;letter-spacing:.5em;margin-top:10px}
+.brief p{color:var(--text-mid);font-size:13.5px;line-height:1.9;margin-top:22px}
+.brief p b{color:var(--text-hi);font-weight:500}
+.hints{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px}
+.hints span{font-family:var(--mono);font-size:11px;color:var(--text-lo);border:1px solid var(--line);
+  border-radius:999px;padding:6px 12px;background:var(--ink-s1)}
+.hints span b{color:var(--accent);font-weight:500}
+.legend{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}
+.legend div{display:flex;gap:10px;align-items:baseline;font-size:12px;color:var(--text-lo);margin-bottom:9px;line-height:1.6}
+.legend i{font-style:normal;font-family:var(--mono);color:var(--accent);font-size:11px;min-width:18px}
+
+/* ---------- 手机框架 ---------- */
+.phone{
+  position:relative;width:390px;height:844px;flex:0 0 auto;border-radius:46px;
+  background:#000;padding:10px;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(242,239,233,.09),0 0 0 11px #1a1a1d;
+}
+.screenwrap{position:relative;width:100%;height:100%;border-radius:37px;overflow:hidden;background:var(--ink-bg);display:flex;flex-direction:column}
+.statusbar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 26px;font-family:var(--mono);font-size:12.5px;color:var(--text-hi);z-index:60;pointer-events:none}
+.statusbar .icons{display:flex;gap:6px;align-items:center;opacity:.9}
+.notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:106px;height:28px;border-radius:16px;background:#000;z-index:70}
+.homebar{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:126px;height:4.5px;border-radius:3px;background:rgba(242,239,233,.35);z-index:65;pointer-events:none}
+
+/* ---------- 通用页面容器 ---------- */
+.page{position:absolute;inset:0;display:none;flex-direction:column;padding-top:44px;background:var(--ink-bg);z-index:10}
+.page.on{display:flex}
+.page.scroll{overflow-y:auto;overscroll-behavior:contain}
+.pad{padding:0 20px}
+
+/* ---------- 连接页 ---------- */
+#p-connect{justify-content:center;align-items:center;text-align:center;padding:44px 30px 30px}
+#p-connect .wm{font-family:var(--mono);font-size:10px;letter-spacing:.4em;color:var(--accent)}
+#p-connect h2{font-family:var(--serif);font-size:34px;font-weight:600;margin-top:14px;letter-spacing:.06em}
+#p-connect .sub{color:var(--text-lo);font-size:12px;margin-top:8px}
+.illus{margin:26px 0 6px}
+.steps{text-align:left;width:100%;max-width:290px;margin:8px auto 0}
+.steps li{list-style:none;display:flex;gap:12px;align-items:flex-start;padding:9px 0;font-size:13px;color:var(--text-mid);line-height:1.55}
+.steps li i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--accent);border:1px solid var(--accent-dim);
+  width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+.pill-status{display:flex;align-items:center;gap:8px;margin:20px auto 0;padding:9px 16px;border-radius:999px;
+  background:rgba(123,201,111,.09);border:1px solid rgba(123,201,111,.28);font-size:12px;color:#b9e0b1}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulse 2.2s infinite}
+@keyframes pulse{50%{opacity:.45}}
+.btn-main{margin-top:18px;width:100%;max-width:290px;height:52px;border:none;border-radius:15px;background:var(--accent);
+  color:#171204;font-family:var(--sans);font-size:15.5px;font-weight:500;cursor:pointer;transition:transform .12s,filter .15s;letter-spacing:.05em}
+.btn-main:active{transform:scale(.97)}
+.btn-main:disabled{filter:grayscale(.5) brightness(.7);cursor:default}
+.ghost{background:none;border:none;color:var(--text-lo);font-size:11.5px;margin-top:14px;cursor:pointer;font-family:var(--sans)}
+.ghost:hover{color:var(--text-mid)}
+.legal{font-size:9.5px;color:#5b584f;margin-top:20px;line-height:1.7}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(23,18,4,.35);border-top-color:#171204;border-radius:50%;
+  animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- 顶栏（设备/相册） ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 6px}
+.dev{display:flex;align-items:center;gap:9px}
+.dev .name{font-family:var(--mono);font-size:13.5px;letter-spacing:.03em}
+.dev .st{font-size:10.5px;color:var(--ok);display:flex;align-items:center;gap:5px}
+.dev .st .dot{width:5px;height:5px}
+.txtbtn{background:none;border:none;color:var(--accent);font-size:12.5px;font-family:var(--sans);cursor:pointer;padding:6px 2px;letter-spacing:.05em}
+.txtbtn.dim{color:var(--text-lo)}
+.h-title{font-family:var(--serif);font-size:26px;font-weight:600;letter-spacing:.06em}
+.h-stats{font-family:var(--mono);font-size:10.5px;color:var(--text-lo);margin-top:3px}
+.chiprow{display:flex;gap:8px;align-items:center;padding:6px 20px 10px}
+.chip{font-size:10.5px;color:var(--text-lo);border:1px solid var(--line);background:var(--ink-s1);border-radius:999px;padding:5px 11px;cursor:pointer;user-select:none}
+.chip.on{color:#171204;background:var(--accent);border-color:var(--accent);font-weight:500}
+.chip.plain{cursor:default}
+
+/* ---------- 网格 ---------- */
+.gridwrap{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 14px 120px}
+.gridwrap::-webkit-scrollbar{display:none}
+.dayhead{display:flex;align-items:baseline;gap:9px;padding:16px 6px 9px}
+.dayhead b{font-family:var(--serif);font-size:14.5px;font-weight:600;letter-spacing:.04em}
+.dayhead span{font-family:var(--mono);font-size:10px;color:var(--text-lo)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3.5px}
+.cell{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;background:var(--ink-s2);
+  animation:cellin .4s both}
+@keyframes cellin{from{opacity:0;transform:translateY(8px)}}
+.cell .ph{position:absolute;inset:0}
+.cell .ph::after{content:"";position:absolute;inset:0;opacity:.16;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+.cell .exif{position:absolute;left:6px;bottom:5px;font-family:var(--mono);font-size:7.5px;color:rgba(242,239,233,.75);
+  text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.tagraw{position:absolute;top:5px;left:5px;font-family:var(--mono);font-size:8px;color:#171204;background:var(--accent);
+  border-radius:5px;padding:2px 5px;letter-spacing:.06em;font-weight:500}
+.badge-dl{position:absolute;top:5px;right:5px;width:19px;height:19px;border-radius:50%;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.5);animation:pop .35s both}
+@keyframes pop{from{transform:scale(0)}70%{transform:scale(1.2)}}
+.selmask{position:absolute;inset:0;border:2.5px solid var(--accent);border-radius:10px}
+.selnum{position:absolute;top:5px;right:5px;min-width:20px;height:20px;border-radius:50%;background:var(--accent);color:#171204;
+  font-family:var(--mono);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.cell .ring{position:absolute;inset:0;background:rgba(12,12,14,.55);display:flex;align-items:center;justify-content:center}
+
+/* ---------- 底栏 ---------- */
+.actionbar{position:absolute;left:0;right:0;bottom:84px;background:linear-gradient(180deg,rgba(23,23,26,0),var(--ink-s1) 30%);
+  padding:16px 20px 12px;display:flex;align-items:center;gap:12px;z-index:30}
+.actionbar .info{flex:1;min-width:0}
+.actionbar .info b{display:block;font-size:12.5px;font-weight:500}
+.actionbar .info span{font-family:var(--mono);font-size:10px;color:var(--text-lo)}
+.btn-dl{border:none;border-radius:13px;background:var(--accent);color:#171204;font-size:13.5px;font-weight:500;
+  padding:13px 20px;cursor:pointer;font-family:var(--sans);transition:transform .12s,filter .15s;white-space:nowrap}
+.btn-dl:disabled{background:var(--ink-s3);color:var(--text-lo);cursor:default}
+.btn-dl:not(:disabled):active{transform:scale(.96)}
+.btn-dl.ghostbtn{background:var(--ink-s2);color:var(--text-mid);padding:13px 16px}
+
+/* ---------- Tab 栏 ---------- */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(18,18,21,.92);backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);display:flex;z-index:40;padding-bottom:20px}
+.tabbar button{flex:1;background:none;border:none;color:var(--text-lo);display:flex;flex-direction:column;align-items:center;
+  gap:4px;font-size:10px;font-family:var(--sans);cursor:pointer;padding-top:11px;letter-spacing:.1em}
+.tabbar button.on{color:var(--accent)}
+.tabbar button.on svg{filter:drop-shadow(0 0 6px rgba(232,163,61,.45))}
+
+/* ---------- 全屏预览 / 查看器 ---------- */
+.overlay{position:absolute;inset:0;background:#08080A;z-index:80;display:none;flex-direction:column}
+.overlay.on{display:flex;animation:fadein .22s both}
+@keyframes fadein{from{opacity:0}}
+.ov-top{position:absolute;top:44px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+  padding:8px 18px;z-index:10;background:linear-gradient(180deg,rgba(8,8,10,.85),transparent)}
+.ov-top .t{font-family:var(--mono);font-size:11.5px;color:var(--text-mid)}
+.iconbtn{background:rgba(23,23,26,.7);border:1px solid var(--line);border-radius:12px;width:36px;height:36px;color:var(--text-hi);
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+.stage{flex:1;position:relative;overflow:hidden;touch-action:none;cursor:grab}
+.stage:active{cursor:grabbing}
+.stage .inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform}
+.stage .photo{width:100%;height:56%;max-height:430px;border-radius:4px;position:relative;transform-origin:center center}
+.stage .photo::after{content:"";position:absolute;inset:0;opacity:.14;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+.zoomhint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:var(--text-lo);
+  background:rgba(23,23,26,.75);padding:5px 12px;border-radius:999px;border:1px solid var(--line);z-index:5;pointer-events:none;
+  transition:opacity .4s}
+.ov-bottom{position:absolute;bottom:0;left:0;right:0;padding:14px 20px 30px;z-index:10;
+  background:linear-gradient(0deg,rgba(8,8,10,.92) 40%,transparent)}
+.ov-meta{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.ov-meta .fn{font-family:var(--mono);font-size:12px}
+.ov-meta .fx{font-family:var(--mono);font-size:9.5px;color:var(--text-lo)}
+.ov-actions{display:flex;gap:10px;align-items:center}
+.btn-ov{flex:1;height:48px;border:none;border-radius:14px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--sans);
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s}
+.btn-ov:active{transform:scale(.97)}
+.btn-ov.primary{background:var(--accent);color:#171204}
+.btn-ov.ok{background:rgba(232,163,61,.13);color:var(--accent);border:1px solid rgba(232,163,61,.35)}
+.btn-ov.sec{background:var(--ink-s2);color:var(--text-mid);flex:0 0 auto;padding:0 18px}
+.btn-ov.danger{background:rgba(226,87,76,.12);color:var(--danger);border:1px solid rgba(226,87,76,.3)}
+.ringpct{font-family:var(--mono);font-size:12px}
+.note-raw{font-size:9.5px;color:#c99a4e;margin-top:9px;text-align:center;line-height:1.6}
+
+/* ---------- 下载抽屉 ---------- */
+.scrim{position:absolute;inset:0;background:rgba(5,5,6,.6);z-index:88;display:none;backdrop-filter:blur(2px)}
+.scrim.on{display:block;animation:fadein .2s both}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--ink-s1);border-radius:22px 22px 0 0;z-index:90;
+  transform:translateY(110%);transition:transform .32s cubic-bezier(.32,.72,.28,1);padding:10px 20px 30px;max-height:66%;display:flex;flex-direction:column}
+.sheet.on{transform:translateY(0)}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--ink-s3);margin:4px auto 14px}
+.sheet h3{font-family:var(--serif);font-size:16.5px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+.sheet h3 span{font-family:var(--mono);font-size:10.5px;color:var(--text-lo);font-weight:400}
+.ovbar{height:4px;border-radius:2px;background:var(--ink-s3);margin:12px 0 4px;overflow:hidden}
+.ovbar i{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .2s linear;width:0}
+.tasks{flex:1;overflow-y:auto;margin-top:8px}
+.tasks::-webkit-scrollbar{display:none}
+.task{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)}
+.task:last-child{border:none}
+.tico{width:34px;height:34px;border-radius:8px;flex:0 0 auto;position:relative;overflow:hidden}
+.tico .rp{position:absolute;inset:0;background:conic-gradient(var(--accent) var(--p,0%),rgba(12,12,14,.66) 0)}
+.tico .rp span{position:absolute;inset:0;background:var(--ink-s2);border-radius:8px;margin:3.5px}
+.tico.done .rp{background:var(--ok)}
+.tmeta{flex:1;min-width:0}
+.tmeta b{display:block;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tmeta span{font-size:10px;color:var(--text-lo)}
+.tmeta span.ok{color:var(--ok)}
+.tmeta span.run{color:var(--accent);font-family:var(--mono)}
+.sheet-foot{display:flex;gap:10px;padding-top:14px}
+.sheet-foot .btn-dl{flex:1;text-align:center}
+
+/* ---------- 悬浮导入胶囊 ---------- */
+.fpill{position:absolute;left:50%;transform:translateX(-50%);bottom:98px;z-index:45;display:none;align-items:center;gap:9px;
+  background:var(--ink-s2);border:1px solid rgba(232,163,61,.4);color:var(--accent);border-radius:999px;padding:10px 18px;
+  font-size:12px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.fpill.on{display:flex;animation:fadein .3s both}
+.fpill .mini{width:14px;height:14px;border:2px solid rgba(232,163,61,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+
+/* ---------- Toast ---------- */
+.toast{position:absolute;left:50%;bottom:180px;transform:translateX(-50%) translateY(10px);background:rgba(30,30,34,.95);
+  border:1px solid var(--line);color:var(--text-hi);font-size:12px;padding:10px 18px;border-radius:12px;z-index:120;
+  opacity:0;pointer-events:none;transition:all .3s;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.fresh{animation:freshpulse 1.6s ease-out 2}
+@keyframes freshpulse{0%,100%{box-shadow:inset 0 0 0 2.5px rgba(232,163,61,0)}25%,75%{box-shadow:inset 0 0 0 2.5px rgba(232,163,61,.95)}}
+.emptyhint{color:var(--text-lo);font-size:12px;text-align:center;padding:60px 0}
+
+@media(max-width:900px){ body{flex-direction:column;gap:36px;padding:24px 12px} .brief{max-width:390px;text-align:center}
+  .brief h1{font-size:40px} .legend,.hints{text-align:left} }
+</style>
+</head>
+<body>
+
+<!-- ================= 左侧说明 ================= -->
+<div class="brief">
+  <div class="wordmark">SONNYLINK · UI CONCEPT</div>
+  <h1>暗房<em>DARKROOM</em></h1>
+  <p>SonnyLink「照片导入版」交互演示 —— 砍掉实时取景，聚焦 <b>浏览 · 放大预览 · 导入 · 本地相册</b>。交互逻辑参考 DJI MIMO：设备 / 相册双 Tab，缩略图角标区分下载状态，预览页双指缩放后一键导入。</p>
+  <p style="margin-top:10px">照片素材为程序化渐变占位（离线可用）；全部数据为模拟，不发起真实网络请求。</p>
+  <div class="hints">
+    <span><b>滚轮</b> 缩放</span><span><b>双击</b> 放大</span><span><b>拖动</b> 平移</span>
+    <span><b>← →</b> 切换照片</span><span><b>手机打开</b> 支持双指捏合</span>
+  </div>
+  <div class="legend">
+    <div><i>①</i>连接页：检测到相机热点后一键连接（对应相机「发送到智能手机」模式）</div>
+    <div><i>②</i>设备页：日期分组网格 · ✓=已下载 · RAW 角标 · 「选择」进入多选批量导入</div>
+    <div><i>③</i>预览页：未下载可放大查看（滚轮/双击/捏合）· 原图大小与预估耗时前置展示</div>
+    <div><i>④</i>导入：3 路并发 · 抽屉进度 · 可后台继续 · 完成后徽标点亮</div>
+    <div><i>⑤</i>相册：本机已导入照片，按拍摄日期分组 · 查看 / 分享 / 删除</div>
+  </div>
+</div>
+
+<!-- ================= 手机 ================= -->
+<div class="phone">
+<div class="screenwrap" id="app">
+  <div class="notch"></div>
+  <div class="statusbar"><span>14:32</span>
+    <span class="icons">
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="2.6" height="4" rx=".6"/><rect x="4" y="5" width="2.6" height="6" rx=".6"/><rect x="8" y="2.5" width="2.6" height="8.5" rx=".6"/><rect x="12" y="0" width="2.6" height="11" rx=".6" opacity=".35"/></svg>
+      <svg width="15" height="11" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 4.2a9.5 9.5 0 0 1 13 0"/><path d="M4 7a6 6 0 0 1 8 0" opacity=".75"/><circle cx="8" cy="10" r="1.1" fill="currentColor" stroke="none"/></svg>
+      <svg width="22" height="11" viewBox="0 0 24 12" fill="none"><rect x=".5" y=".5" width="19" height="11" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13.5" height="8" rx="1.8" fill="currentColor"/><path d="M21.5 4v4a2.4 2.4 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+    </span>
+  </div>
+
+  <!-- ---------- 连接页 ---------- -->
+  <div class="page on" id="p-connect">
+    <div class="wm">SONNYLINK</div>
+    <h2>导入照片</h2>
+    <div class="sub">连接你的索尼相机 · Wi-Fi 直连</div>
+    <div class="illus">
+      <svg width="150" height="96" viewBox="0 0 150 96" fill="none">
+        <rect x="30" y="30" width="72" height="50" rx="9" stroke="#8E8A82" stroke-width="1.6"/>
+        <path d="M46 30l5-8h20l5 8" stroke="#8E8A82" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="66" cy="55" r="14" stroke="#E8A33D" stroke-width="1.8"/>
+        <circle cx="66" cy="55" r="8" stroke="#E8A33D" stroke-width="1.2" opacity=".55"/>
+        <circle cx="66" cy="55" r="3" fill="#E8A33D"/>
+        <circle cx="93" cy="39" r="2" fill="#8E8A82"/>
+        <path d="M110 24a26 26 0 0 1 0 44" stroke="#E8A33D" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>
+        <path d="M118 16a38 38 0 0 1 0 60" stroke="#E8A33D" stroke-width="1.4" stroke-linecap="round" opacity=".45"/>
+        <path d="M126 8a50 50 0 0 1 0 76" stroke="#E8A33D" stroke-width="1.2" stroke-linecap="round" opacity=".2"/>
+        <rect x="8" y="40" width="16" height="30" rx="4" stroke="#8E8A82" stroke-width="1.4"/>
+        <rect x="11" y="44" width="10" height="16" rx="1.5" fill="#E8A33D" opacity=".8"/>
+      </svg>
+    </div>
+    <ul class="steps">
+      <li><i>1</i>相机菜单 → 应用程序 → <b style="color:#F2EFE9">发送到智能手机</b></li>
+      <li><i>2</i>手机 Wi-Fi 设置里连接 <span style="font-family:var(--mono);font-size:11px;color:#E8A33D">DIRECT-8A2B:ILCE-6300</span></li>
+      <li><i>3</i>回到本页，自动检测并连接</li>
+    </ul>
+    <div class="pill-status"><span class="dot"></span>检测到相机热点 · 信号强</div>
+    <button class="btn-main" id="btnConnect" onclick="doConnect()">连接相机</button>
+    <button class="ghost" onclick="toast('高级：手动输入 SSID / 密码（备用路径）')">手动输入 SSID（高级）</button>
+    <div class="legal">第三方非官方软件，与索尼公司无任何关联<br>仅用于连接你自己拥有的相机</div>
+  </div>
+
+  <!-- ---------- 设备页 ---------- -->
+  <div class="page" id="p-device">
+    <div class="topbar">
+      <div class="dev">
+        <div>
+          <div class="name">ILCE-6300</div>
+          <div class="st"><span class="dot"></span>已连接 · 卡内 14 张</div>
+        </div>
+      </div>
+      <button class="txtbtn" id="btnSelectMode" onclick="toggleSelectMode()">选择</button>
+    </div>
+    <div class="chiprow">
+      <span class="chip on" id="chipOrig" onclick="toggleFilter()">仅 JPEG 原图</span>
+      <span class="chip plain" id="devStats">按拍摄日期分组</span>
+    </div>
+    <div class="gridwrap" id="devGrid"></div>
+    <div class="actionbar" id="devBar" style="display:none">
+      <div class="info"><b id="selCount">已选 0 张</b><span id="selSize">0 MB</span></div>
+      <button class="btn-dl ghostbtn" onclick="cancelSelect()">取消</button>
+      <button class="btn-dl" id="btnImport" disabled onclick="startImportFromGrid()">下载</button>
+    </div>
+  </div>
+
+  <!-- ---------- 相册页 ---------- -->
+  <div class="page" id="p-album">
+    <div class="topbar">
+      <div>
+        <div class="h-title">相册</div>
+        <div class="h-stats" id="albStats"></div>
+      </div>
+    </div>
+    <div class="gridwrap" id="albGrid"></div>
+  </div>
+
+  <!-- ---------- Tab 栏 ---------- -->
+  <div class="tabbar" id="tabbar" style="display:none">
+    <button class="on" id="tab-device" onclick="switchTab('device')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="4"/></svg>
+      设备
+    </button>
+    <button id="tab-album" onclick="switchTab('album')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 15.5l4.5-4.5 4 4 3-3 6.5 6"/><circle cx="15.5" cy="9" r="1.4"/></svg>
+      相册
+    </button>
+  </div>
+
+  <!-- ---------- 悬浮导入胶囊 ---------- -->
+  <div class="fpill" id="fpill" onclick="openSheet()"><span class="mini"></span><span id="fpillText">导入中…</span></div>
+
+  <!-- ---------- 预览（设备） ---------- -->
+  <div class="overlay" id="ovPreview">
+    <div class="ov-top">
+      <button class="iconbtn" onclick="closePreview()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="t" id="pvTitle"></span>
+      <span class="t" id="pvIdx"></span>
+    </div>
+    <div class="stage" id="pvStage">
+      <div class="inner" id="pvInner"><div class="photo" id="pvPhoto"></div></div>
+      <div class="zoomhint" id="pvHint">滚轮 / 双击 / 双指捏合缩放 · ← → 切换</div>
+    </div>
+    <div class="ov-bottom">
+      <div class="ov-meta"><span class="fn" id="pvName"></span><span class="fx" id="pvExif"></span></div>
+      <div class="ov-actions" id="pvActions"></div>
+      <div class="note-raw" id="pvRawNote" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ---------- 查看器（相册） ---------- -->
+  <div class="overlay" id="ovViewer">
+    <div class="ov-top">
+      <button class="iconbtn" onclick="closeViewer()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="t" id="vwTitle"></span>
+      <span class="t" id="vwIdx"></span>
+    </div>
+    <div class="stage" id="vwStage">
+      <div class="inner" id="vwInner"><div class="photo" id="vwPhoto"></div></div>
+    </div>
+    <div class="ov-bottom">
+      <div class="ov-meta"><span class="fn" id="vwName"></span><span class="fx" id="vwExif"></span></div>
+      <div class="ov-actions">
+        <button class="btn-ov sec" onclick="toast('已唤起系统分享面板')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M12 3l-4 4M12 3l4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>
+          分享
+        </button>
+        <button class="btn-ov danger" onclick="askDelete()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l1 13h9l1-13"/></svg>
+          删除
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 删除确认 ---------- -->
+  <div class="scrim" id="scrimDel" onclick="closeScrimDel()">
+    <div class="sheet" id="sheetDel" style="max-height:none" onclick="event.stopPropagation()">
+      <div class="grab"></div>
+      <h3>删除这张照片？</h3>
+      <p style="color:var(--text-lo);font-size:12px;margin:10px 0 4px;line-height:1.7">将通过系统确认移至回收站（<span id="delName" style="font-family:var(--mono)"></span>）。相机卡上的原文件不受影响。</p>
+      <div class="sheet-foot">
+        <button class="btn-dl ghostbtn" style="flex:1" onclick="closeScrimDel()">取消</button>
+        <button class="btn-dl" style="background:var(--danger);color:#fff;flex:1" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 下载抽屉 ---------- -->
+  <div class="scrim" id="scrim" onclick="hideSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="grab"></div>
+    <h3 id="shTitle">正在导入 <span></span></h3>
+    <div class="ovbar"><i id="shBar"></i></div>
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text-lo)">
+      <span id="shStat"></span><span id="shEta"></span>
+    </div>
+    <div class="tasks" id="shTasks"></div>
+    <div class="sheet-foot" id="shFoot"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="homebar"></div>
+</div>
+</div>
+
+<script>
+/* ==================== 数据 ==================== */
+const GRADS = [
+  "radial-gradient(130% 100% at 25% 8%, #C98B3A 0%, #6E4A22 32%, #241A10 72%, #12100C 100%)",
+  "radial-gradient(120% 95% at 70% 12%, #4E7E96 0%, #274252 38%, #101C24 78%, #0B0F13 100%)",
+  "radial-gradient(110% 90% at 30% 90%, #B0574E 0%, #5E2E2A 40%, #1E1210 82%, #0F0A09 100%)",
+  "radial-gradient(125% 100% at 80% 20%, #5E8B5B 0%, #2E4A30 42%, #121C13 80%, #0A0F0A 100%)",
+  "radial-gradient(115% 95% at 20% 25%, #8E7BB5 0%, #453A63 40%, #171427 80%, #0C0B14 100%)",
+  "radial-gradient(130% 105% at 55% 5%, #9AA3AD 0%, #4C545C 35%, #1B1F23 75%, #0D0F11 100%)",
+  "radial-gradient(120% 90% at 15% 60%, #C96F8F 0%, #63354A 42%, #1D121A 80%, #0E0A0D 100%)",
+  "radial-gradient(125% 100% at 65% 85%, #3FA0A8 0%, #1E5257 40%, #0E2225 78%, #080F10 100%)",
+  "radial-gradient(120% 95% at 40% 15%, #D0A45C 0%, #7A5A28 35%, #2A2012 72%, #12100A 100%)",
+  "radial-gradient(115% 100% at 85% 45%, #6E8FC9 0%, #34496E 40%, #131A2A 80%, #0A0D14 100%)"
+];
+const EXIFS = ["f/1.8 · 1/1600 · ISO 100","f/2.8 · 1/250 · ISO 400","f/4 · 1/125 · ISO 800","f/2 · 1/800 · ISO 200","f/5.6 · 1/60 · ISO 1600","f/1.4 · 1/2000 · ISO 100"];
+
+let uid = 100;
+function P(name, date, mb, raw, dl, g){ return {id:++uid, name, date, mb, raw, downloaded:dl, grad:GRADS[g%GRADS.length], exif:EXIFS[g%EXIFS.length]}; }
+
+const photos = [
+  P("DSC00437.ARW","2026-03-27",1.3,true,false,4),
+  P("DSC00435.JPG","2026-03-27",9.2,false,true,0),
+  P("DSC00431.JPG","2026-03-27",7.8,false,false,1),
+  P("DSC00428.JPG","2026-03-27",8.4,false,false,7),
+  P("DSC00424.ARW","2026-03-27",1.1,true,false,3),
+  P("DSC00421.JPG","2026-03-27",11.6,false,false,2),
+  P("DSC00418.JPG","2026-03-27",6.9,false,true,5),
+  P("DSC00415.JPG","2026-03-27",8.1,false,false,9),
+  P("DSC00392.JPG","2026-03-21",7.2,false,false,6),
+  P("DSC00389.JPG","2026-03-21",9.8,false,false,8),
+  P("DSC00385.JPG","2026-03-21",8.6,false,true,1),
+  P("DSC00381.JPG","2026-03-21",7.5,false,false,3),
+  P("DSC00377.JPG","2026-03-21",10.4,false,false,0),
+  P("DSC00372.JPG","2026-03-21",6.3,false,false,7),
+];
+const albumExtras = [ /* 更早之前导入过的 */
+  P("DSC00291.JPG","2026-03-15",8.8,false,true,2),
+  P("DSC00287.JPG","2026-03-15",7.1,false,true,5),
+  P("DSC00284.JPG","2026-03-15",9.5,false,true,9),
+  P("DSC00280.JPG","2026-03-15",6.6,false,true,4),
+  P("DSC00276.JPG","2026-03-15",8.0,false,true,8),
+  P("DSC00271.JPG","2026-03-15",7.7,false,true,6),
+];
+
+const state = {
+  screen:"connect", tab:"device",
+  selectMode:false, selected:new Set(), showRaw:false,
+  imports:[], sheetOpen:false, sheetDone:false,
+  pv:{list:[],i:0,src:"device"}, vw:{list:[],i:0},
+  freshIds:new Set(),
+};
+const albumItems = () => photos.filter(p=>p.downloaded).concat(albumExtras);
+
+/* ==================== 工具 ==================== */
+const $ = s => document.querySelector(s);
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("on"),2000); }
+function fmt(mb){ return mb>=1 ? mb.toFixed(1)+" MB" : (mb*1024).toFixed(0)+" KB"; }
+function dayLabel(d){ const [y,m,dd]=d.split("-"); return `${y}年${+m}月${+dd}日`; }
+function byDay(list){
+  const map = new Map();
+  for(const p of list){ if(!map.has(p.date)) map.set(p.date,[]); map.get(p.date).push(p); }
+  return [...map.entries()].sort((a,b)=>a[0]<b[0]?1:-1);
+}
+const CHECK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#171204" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>';
+
+/* ==================== 连接 ==================== */
+function doConnect(){
+  const b = $("#btnConnect");
+  b.disabled = true; b.innerHTML = '<span class="spinner"></span>正在建立连接…';
+  setTimeout(()=>{
+    b.disabled=false; b.textContent="连接相机";
+    $("#tabbar").style.display="flex";
+    switchTab("device");
+    toast("已连接 ILCE-6300");
+  },1300);
+}
+
+/* ==================== Tab ==================== */
+function switchTab(tab){
+  state.tab = tab;
+  $("#p-connect").classList.remove("on");
+  $("#p-device").classList.toggle("on", tab==="device");
+  $("#p-album").classList.toggle("on", tab==="album");
+  $("#tab-device").classList.toggle("on", tab==="device");
+  $("#tab-album").classList.toggle("on", tab==="album");
+  if(tab==="album"){ renderAlbum(); state.freshIds.clear(); }
+  renderDevice();
+}
+
+/* ==================== 设备页 ==================== */
+function deviceList(){ return state.showRaw ? photos : photos.filter(p=>!p.raw); }
+
+function renderDevice(anim=true){
+  const list = deviceList();
+  const wrap = $("#devGrid");
+  let html = "";
+  for(const [date, items] of byDay(list)){
+    html += `<div class="dayhead"><b>${dayLabel(date)}</b><span>${items.length} 张</span></div><div class="grid">`;
+    items.forEach(p=>{
+      const sel = state.selected.has(p.id);
+      const selIdx = [...state.selected].indexOf(p.id)+1;
+      const dl = anim ? `animation-delay:${(items.indexOf(p)%9)*22}ms` : "animation:none";
+      html += `<div class="cell" data-id="${p.id}" onclick="cellTap(${p.id})" style="${dl}">
+        <div class="ph" style="background:${p.grad}"></div>
+        <div class="exif">${p.exif.split(" · ")[0]}</div>
+        ${p.raw?'<span class="tagraw">RAW</span>':''}
+        ${p.downloaded?'<span class="badge-dl">'+CHECK+'</span>':''}
+        ${state.selectMode&&sel?`<div class="selmask"></div><div class="selnum">${selIdx}</div>`:''}
+        ${importingOf(p.id)}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  wrap.innerHTML = html;
+  $("#devStats").textContent = state.showRaw ? "含 RAW 转码预览" : "按拍摄日期分组";
+  $("#chipOrig").classList.toggle("on", !state.showRaw);
+  $("#chipOrig").textContent = state.showRaw ? "全部（含 RAW 预览）" : "仅 JPEG 原图";
+
+  const bar = $("#devBar");
+  bar.style.display = state.selectMode ? "flex" : "none";
+  if(state.selectMode){
+    const sel = photos.filter(p=>state.selected.has(p.id));
+    const mb = sel.reduce((s,p)=>s+p.mb,0);
+    $("#selCount").textContent = `已选 ${sel.length} 张`;
+    $("#selSize").textContent = fmt(mb) + (sel.some(p=>p.raw)?" · RAW 将保存为转码预览":"");
+    $("#btnImport").disabled = sel.length===0;
+    $("#btnImport").textContent = `下载 ${sel.length||""}`;
+  }
+}
+function importingOf(id){
+  const t = state.imports.find(t=>t.pid===id && t.st!=="done");
+  if(!t) return "";
+  if(t.st==="queued") return `<div class="ring"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8A33D" stroke-width="2.4"><circle cx="12" cy="12" r="9" opacity=".3"/><path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round"/></svg></div>`;
+  return `<div class="ring"><svg width="30" height="30" viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke="rgba(12,12,14,.6)" stroke-width="4"/><circle cx="18" cy="18" r="14" fill="none" stroke="#E8A33D" stroke-width="4" stroke-linecap="round" stroke-dasharray="${t.pr*0.88} 88" transform="rotate(-90 18 18)"/><text x="18" y="21.5" text-anchor="middle" fill="#F2EFE9" font-size="9.5" font-family="IBM Plex Mono,monospace">${Math.round(t.pr)}%</text></svg></div>`;
+}
+function toggleFilter(){ state.showRaw=!state.showRaw; clearSel(); renderDevice(); }
+function toggleSelectMode(){ state.selectMode=!state.selectMode; clearSel(); $("#btnSelectMode").textContent=state.selectMode?"完成":"选择"; renderDevice(); }
+function cancelSelect(){ state.selectMode=false; clearSel(); $("#btnSelectMode").textContent="选择"; renderDevice(); }
+function clearSel(){ state.selected.clear(); }
+function cellTap(id){
+  const p = photos.find(x=>x.id===id);
+  if(state.selectMode){ state.selected.has(id)?state.selected.delete(id):state.selected.add(id); renderDevice(); return; }
+  openPreview(deviceList(), deviceList().findIndex(x=>x.id===id), "device");
+}
+
+/* ==================== 预览 ==================== */
+const T = {s:1,x:0,y:0};
+function applyT(el){ el.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.s})`; }
+function resetT(){ T.s=1;T.x=0;T.y=0; applyT($("#pvInner")); applyT($("#vwInner")); }
+function clampT(){
+  const lim = 150*(T.s-1);
+  T.x=Math.max(-lim,Math.min(lim,T.x)); T.y=Math.max(-lim,Math.min(lim,T.y));
+}
+function openPreview(list,i,src){
+  state.pv={list,i,src};
+  $("#ovPreview").classList.add("on");
+  renderPreview();
+}
+function renderPreview(){
+  const {list,i}=state.pv; const p=list[i];
+  $("#pvPhoto").style.background=p.grad;
+  $("#pvTitle").textContent = p.raw ? "转码预览" : "未下载 · 放大查看";
+  $("#pvIdx").textContent = `${i+1} / ${list.length}`;
+  $("#pvName").textContent = p.name;
+  $("#pvExif").textContent = `${p.raw?"仅 JPEG 预览":"24.3 MP"} · ${fmt(p.mb)}`;
+  resetT();
+  renderPreviewActions();
+}
+/* 只刷新操作区（导入进度刷新时调用，避免打断缩放状态） */
+function renderPreviewActions(){
+  const {list,i}=state.pv; const p=list[i];
+  const act=$("#pvActions"); const note=$("#pvRawNote");
+  const imp = state.imports.find(t=>t.pid===p.id && t.st!=="done");
+  if(imp){
+    act.innerHTML = `<button class="btn-ov primary" disabled><span class="ringpct">导入中 ${Math.round(imp.pr)}%</span></button>`;
+    note.style.display="none";
+  } else if(p.downloaded){
+    act.innerHTML = `<button class="btn-ov ok" disabled>${CHECK}&nbsp; 已在相册</button>`;
+    note.style.display="none";
+  } else if(p.raw){
+    act.innerHTML = `<button class="btn-ov primary" onclick="dlOne()">下载转码预览 · ${fmt(p.mb)}</button>`;
+    note.style.display="block";
+    note.textContent="RAW 无法通过 Wi-Fi 传输原文件（相机仅提供 JPEG 转码预览，请求原图返回 HTTP 406）";
+  } else {
+    const eta = Math.max(1,Math.round(p.mb/2.1));
+    act.innerHTML = `<button class="btn-ov primary" onclick="dlOne()">下载原图 · ${fmt(p.mb)} · 约 ${eta}s</button>`;
+    note.style.display="none";
+  }
+}
+function closePreview(){ $("#ovPreview").classList.remove("on"); renderDevice(); }
+function stepPreview(d){
+  const {list}=state.pv;
+  state.pv.i=(state.pv.i+d+list.length)%list.length;
+  renderPreview();
+}
+function dlOne(){
+  const p = state.pv.list[state.pv.i];
+  launchImports([p], ()=>renderPreview());
+}
+
+/* 缩放 / 平移 / 滑动（预览与查看器共用） */
+function bindStage(stageId, innerId, hintId, onSwipe){
+  const stage=$(stageId), inner=$(innerId);
+  const pts=new Map(); let pinch0=null, s0=1, startX=0, swiping=false;
+  stage.addEventListener("wheel",e=>{
+    e.preventDefault();
+    const f = e.deltaY<0 ? 1.18 : 1/1.18;
+    T.s=Math.max(1,Math.min(8,T.s*f)); if(T.s===1){T.x=0;T.y=0;} clampT(); applyT(inner); hideHint(hintId);
+  },{passive:false});
+  stage.addEventListener("dblclick",()=>{
+    T.s = T.s>1.5 ? 1 : 3; if(T.s===1){T.x=0;T.y=0;} clampT(); applyT(inner); hideHint(hintId);
+  });
+  stage.addEventListener("pointerdown",e=>{
+    stage.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===2){ const [a,b]=[...pts.values()]; pinch0=Math.hypot(a.x-b.x,a.y-b.y); s0=T.s; }
+    startX=e.clientX; swiping=true;
+  });
+  stage.addEventListener("pointermove",e=>{
+    if(!pts.has(e.pointerId)) return;
+    const prev=pts.get(e.pointerId);
+    const dx=e.clientX-prev.x, dy=e.clientY-prev.y;
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===2){
+      const [a,b]=[...pts.values()];
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(pinch0){ T.s=Math.max(1,Math.min(8,s0*d/pinch0)); clampT(); applyT(inner); hideHint(hintId); }
+    } else if(T.s>1){
+      T.x+=dx; T.y+=dy; clampT(); applyT(inner); swiping=false;
+    } else if(swiping && Math.abs(e.clientX-startX)>56){
+      swiping=false; onSwipe(e.clientX>startX ? -1 : 1); /* 注：照片左滑=下一张 */
+    }
+  });
+  const up=e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch0=null; if(pts.size===0) swiping=false; };
+  stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
+}
+function hideHint(id){ const h=$(id); if(h){h.style.opacity="0";} }
+
+/* ==================== 导入引擎（模拟） ==================== */
+function launchImports(items, after){
+  const tasks = items.filter(p=>!p.downloaded).map(p=>({pid:p.id, ph:p, st:"queued", pr:0}));
+  if(!tasks.length){ toast("所选照片均已在相册"); return; }
+  state.imports = state.imports.filter(t=>t.st!=="done"); /* 清掉上一轮已完成任务 */
+  state.imports.push(...tasks);
+  state.sheetDone=false; state._after = after || null;
+  openSheet();
+  pump();
+}
+function pump(){
+  if(state._timer) return;
+  state._timer = setInterval(()=>{
+    const run = state.imports.filter(t=>t.st==="run");
+    const queued = state.imports.filter(t=>t.st==="queued");
+    while(run.length<3 && queued.length){ const t=queued.shift(); t.st="run"; run.push(t); }
+    for(const t of run){
+      t.pr += 120/(t.ph.mb*4.5+8); /* 模拟下载进度（%）：约 5s/张，RAW 预览约 1.5s */
+      if(t.pr>=100){ t.pr=100; t.st="done"; t.ph.downloaded=true; state.freshIds.add(t.ph.id); }
+    }
+    const all = state.imports;
+    const done = all.filter(t=>t.st==="done").length;
+    if(done===all.length && all.length){ finishImports(); }
+    renderSheet();
+    if(state.tab==="device") renderDevice(false);
+    if($("#ovPreview").classList.contains("on")) renderPreviewActions();
+  },120);
+}
+function finishImports(){
+  clearInterval(state._timer); state._timer=null; state.sheetDone=true;
+  const n=state.imports.length;
+  renderSheet();
+  toast(`已导入 ${n} 张 · 已写入系统相册`);
+  if(state._after){ state._after(); state._after=null; }
+}
+function startImportFromGrid(){
+  const items = photos.filter(p=>state.selected.has(p.id));
+  launchImports(items);
+  state.selectMode=false; clearSel(); $("#btnSelectMode").textContent="选择";
+  renderDevice();
+}
+
+/* ==================== 下载抽屉 ==================== */
+function openSheet(){ state.sheetOpen=true; $("#sheet").classList.add("on"); $("#scrim").classList.add("on"); renderSheet(); }
+function hideSheet(){ state.sheetOpen=false; $("#sheet").classList.remove("on"); $("#scrim").classList.remove("on"); syncFpill(); }
+function renderSheet(){
+  const all=state.imports; if(!all.length) return;
+  const done=all.filter(t=>t.st==="done").length;
+  const totalMb=all.reduce((s,t)=>s+t.ph.mb,0);
+  const gotMb=all.reduce((s,t)=>s+t.ph.mb*t.pr/100,0);
+  $("#shTitle").innerHTML = state.sheetDone ? `导入完成 <span>${done} / ${all.length}</span>` : `正在导入 <span>${done} / ${all.length}</span>`;
+  $("#shBar").style.width = (gotMb/totalMb*100)+"%";
+  $("#shStat").textContent = `${gotMb.toFixed(1)} / ${totalMb.toFixed(1)} MB`;
+  const speed = all.filter(t=>t.st==="run").length ? (2.6+Math.random()*0.8).toFixed(1)+" MB/s" : "";
+  $("#shEta").textContent = state.sheetDone ? "已写入 相册 · Pictures/SonnyLink" : speed;
+  $("#shTasks").innerHTML = all.map(t=>{
+    let sub="";
+    if(t.st==="queued") sub=`<span>排队中…</span>`;
+    else if(t.st==="run") sub=`<span class="run">${(t.ph.mb*t.pr/100).toFixed(1)} MB · ${speed}</span>`;
+    else sub=`<span class="ok">✓ 完成 · ${t.ph.raw?"转码预览":"原图"} ${fmt(t.ph.mb)}</span>`;
+    return `<div class="task">
+      <div class="tico ${t.st==="done"?"done":""}"><div class="rp" style="--p:${t.pr}%"><span></span></div></div>
+      <div class="tmeta"><b>${t.ph.name}</b>${sub}</div>
+    </div>`;
+  }).join("");
+  $("#shFoot").innerHTML = state.sheetDone
+    ? `<button class="btn-dl ghostbtn" onclick="hideSheet();state.imports=[]">完成</button><button class="btn-dl" onclick="hideSheet();state.imports=[];switchTab('album')">查看相册</button>`
+    : `<button class="btn-dl ghostbtn" style="flex:1" onclick="hideSheet()">后台继续</button>`;
+  syncFpill();
+}
+function syncFpill(){
+  const running = state.imports.some(t=>t.st!=="done") && !state.sheetOpen && state.tab==="device";
+  $("#fpill").classList.toggle("on", running);
+  if(running){
+    const done=state.imports.filter(t=>t.st==="done").length;
+    $("#fpillText").textContent=`导入中 ${done}/${state.imports.length}`;
+  }
+}
+
+/* ==================== 相册 ==================== */
+function renderAlbum(){
+  const list=albumItems();
+  const totalMb=list.reduce((s,p)=>s+p.mb,0);
+  $("#albStats").textContent=`${list.length} 张 · ${(totalMb/1024).toFixed(2)} GB · 已同步系统相册`;
+  const wrap=$("#albGrid");
+  if(!list.length){ wrap.innerHTML=`<div class="emptyhint">还没有导入的照片<br>去「设备」页选择照片下载</div>`; return; }
+  let html="";
+  for(const [date,items] of byDay(list)){
+    html+=`<div class="dayhead"><b>${dayLabel(date)}</b><span>${items.length} 张</span></div><div class="grid">`;
+    items.forEach(p=>{
+      html+=`<div class="cell ${state.freshIds.has(p.id)?"fresh":""}" onclick="openViewer(albumItems(),albumItems().findIndex(x=>x.id===${p.id}))" style="animation-delay:${(items.indexOf(p)%9)*22}ms">
+        <div class="ph" style="background:${p.grad}"></div>
+        <div class="exif">${p.exif.split(" · ")[0]}</div>
+        ${p.raw?'<span class="tagraw">预览</span>':''}
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  wrap.innerHTML=html;
+}
+function openViewer(list,i){
+  state.vw={list,i};
+  $("#ovViewer").classList.add("on");
+  renderViewer();
+}
+function renderViewer(){
+  const {list,i}=state.vw; const p=list[i];
+  $("#vwPhoto").style.background=p.grad;
+  $("#vwTitle").textContent="本机相册";
+  $("#vwIdx").textContent=`${i+1} / ${list.length}`;
+  $("#vwName").textContent=p.name;
+  $("#vwExif").textContent=`${p.raw?"转码预览":"24.3 MP"} · ${fmt(p.mb)} · ${dayLabel(p.date)}`;
+  resetT();
+}
+function closeViewer(){ $("#ovViewer").classList.remove("on"); renderAlbum(); }
+function stepViewer(d){ const {list}=state.vw; state.vw.i=(state.vw.i+d+list.length)%list.length; renderViewer(); }
+function askDelete(){
+  const p=state.vw.list[state.vw.i];
+  $("#delName").textContent=p.name;
+  $("#scrimDel").classList.add("on");
+  setTimeout(()=>$("#sheetDel").classList.add("on"),10);
+}
+function closeScrimDel(){ $("#sheetDel").classList.remove("on"); setTimeout(()=>$("#scrimDel").classList.remove("on"),200); }
+function doDelete(){
+  const p=state.vw.list[state.vw.i];
+  const k=photos.indexOf(p); if(k>=0) photos[k].downloaded=false;
+  const k2=albumExtras.indexOf(p); if(k2>=0) albumExtras.splice(k2,1);
+  closeScrimDel(); closeViewer();
+  toast("已移至系统回收站");
+}
+
+/* ==================== 键盘（桌面演示） ==================== */
+document.addEventListener("keydown",e=>{
+  if($("#ovPreview").classList.contains("on")){
+    if(e.key==="ArrowLeft") stepPreview(-1);
+    if(e.key==="ArrowRight") stepPreview(1);
+    if(e.key==="Escape") closePreview();
+  } else if($("#ovViewer").classList.contains("on")){
+    if(e.key==="ArrowLeft") stepViewer(-1);
+    if(e.key==="ArrowRight") stepViewer(1);
+    if(e.key==="Escape") closeViewer();
+  }
+});
+
+/* ==================== 绑定与启动 ==================== */
+bindStage("#pvStage","#pvInner","#pvHint", d=>stepPreview(d));
+bindStage("#vwStage","#vwInner",null, d=>stepViewer(d));
+renderDevice(); renderAlbum();
+</script>
+</body>
+</html>
