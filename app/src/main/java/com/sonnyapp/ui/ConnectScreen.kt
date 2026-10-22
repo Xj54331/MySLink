@@ -59,6 +59,7 @@ fun ConnectScreen(vm: DeviceViewModel) {
     val wifi by vm.wifiState.collectAsState()
     var ssid by remember { mutableStateOf(vm.savedSsid) }
     var pass by remember { mutableStateOf(vm.savedPass) }
+    var manualAddr by remember { mutableStateOf("") }
     var advanced by remember { mutableStateOf(false) }
     var logOpen by remember { mutableStateOf(false) }
 
@@ -150,6 +151,26 @@ fun ConnectScreen(vm: DeviceViewModel) {
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth().height(48.dp),
             ) { Text("用 SSID / 密码连接", fontSize = 14.sp) }
+
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "按地址直连（组播被屏蔽时的备用路径）",
+                color = TextLo, fontSize = 10.5.sp,
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = manualAddr, onValueChange = { manualAddr = it },
+                label = { Text("设备描述地址 · 如 http://192.168.122.1:64321/dd.xml") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(10.dp))
+            Button(
+                onClick = { vm.connectManual(manualAddr.trim()) },
+                enabled = !busy && manualAddr.isNotBlank(),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) { Text("按地址直连", fontSize = 14.sp) }
         }
 
         Spacer(Modifier.height(18.dp))

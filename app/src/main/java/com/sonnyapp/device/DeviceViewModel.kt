@@ -201,6 +201,23 @@ class DeviceViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** 手动路径：按设备描述地址直连（组播不可用时的备用路径）。 */
+    fun connectManual(location: String) {
+        if (_busy.value || location.isBlank()) return
+        viewModelScope.launch {
+            _busy.value = true
+            _status.value = "正在连接 " + location + " …"
+            val err = repo.connectManual(location)
+            if (err != null) {
+                _status.value = err
+                _connected.value = false
+                _busy.value = false
+                return@launch
+            }
+            onConnected()
+        }
+    }
+
     private fun onConnected() {
         _connected.value = true
         _status.value = "已连接 " + repo.friendlyName

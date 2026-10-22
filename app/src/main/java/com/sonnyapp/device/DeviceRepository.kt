@@ -73,6 +73,37 @@ class DeviceRepository(private val context: Context) {
         afterNetwork(n)
     }
 
+    /**
+     * 手动输入设备描述地址直连（跳过 SSDP）。
+     *
+     * 场景：路由器/热点屏蔽组播导致 SSDP 发不出去，但 HTTP 可达；
+     * 也用于无相机环境下用模拟服务器联调。
+     */
+    suspend fun connectManual(location: String): String? = withContext(Dispatchers.IO) {
+        synchronized(log) { log.setLength(0) }
+        note("[1/2] 手动直连 " + location)
+        val n = net.adoptSystemWifi()
+        if (n == null) {
+            return@withContext "没有找到已连接的 Wi-Fi。\n请先连上相机的热点，或确认手机与相机在同一网络。"
+        }
+        note("[2/2] 抓取设备描述")
+        val c = DlnaClient(n)
+        val ok = try {
+            c.discoverAtLocation(location)
+        } catch (e: Exception) {
+            note("      异常: " + (e.message ?: ""))
+            false
+        }
+        if (!ok) {
+            return@withContext "无法从该地址读取 DLNA 设备描述。\n" +
+                "请检查地址（形如 http://192.168.122.1:64321/dd.xml）。"
+        }
+        note("      设备 = " + c.friendlyName)
+        note("      控制地址 = " + c.controlUrl)
+        client = c
+        null
+    }
+
     /** 网络就绪后做 DLNA 发现。返回错误信息，成功返回 null。 */
     private fun afterNetwork(n: Network): String? {
         note("[2/3] SSDP 发现 DLNA 媒体服务器")

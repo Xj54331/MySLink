@@ -82,7 +82,7 @@ fun PreviewScreen(
             PreviewPage(
                 item = items[page],
                 vm = vm,
-                thumb = { items.getOrNull(page - 1)?.let { p -> vm.peekThumb(p.id) } },
+                thumb = { vm.peekThumb(items[page].id) },
             )
         }
 

@@ -74,22 +74,26 @@ class ImportQueue(
     }
 
     /**
-     * 启动执行。已有 job 在跑时什么都不做（新提交的任务会被现有 worker 拾起的前提
-     * 不成立 —— worker 是按启动时的 QUEUED 列表铺开的，因此 [submit] 之后
-     * 如果 [isActive] 为 false 需要再调一次 start）。
+     * 启动执行。已有 job 在跑时什么都不做。
+     *
+     * 执行体是**排水式**的：每轮取当前全部 QUEUED 任务并发跑完，
+     * 然后重新检查队列 —— 这样「运行中提交的新任务」会在本轮结束后被拾起，
+     * 不会成为孤岛（旧实现只跑启动时的快照，中途提交的任务要等下一次 start）。
      */
     fun start(performer: Performer) {
         if (job?.isActive == true) return
-        val initial = _tasks.value.filter { it.state == ImportState.QUEUED }
-        if (initial.isEmpty()) return
         job = scope.launch {
             val gate = Semaphore(concurrencyProvider().coerceIn(1, 8))
-            coroutineScope {
-                initial.map { t ->
-                    async {
-                        gate.withPermit { runOne(t.id, performer) }
-                    }
-                }.awaitAll()
+            while (true) {
+                val batch = _tasks.value.filter { it.state == ImportState.QUEUED }
+                if (batch.isEmpty()) break
+                coroutineScope {
+                    batch.map { t ->
+                        async {
+                            gate.withPermit { runOne(t.id, performer) }
+                        }
+                    }.awaitAll()
+                }
             }
         }
     }

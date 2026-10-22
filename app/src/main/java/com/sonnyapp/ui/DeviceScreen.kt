@@ -100,8 +100,14 @@ fun DeviceScreen(
     var sheetOpen by remember { mutableStateOf(false) }
 
     val runningCount = importProgress.values.count { !it.isFinished }
+    // 仅在「从无到有」时自动弹出下载抽屉：
+    // 用户点「后台继续」收起后，排队任务转运行会引起 runningCount 变化，
+    // 若不区分升降沿，抽屉会一遍遍自动弹回来（实测过的交互陷阱）。
+    var wasRunning by remember { mutableStateOf(false) }
     LaunchedEffect(runningCount) {
-        if (runningCount > 0) sheetOpen = true
+        val running = runningCount > 0
+        if (running && !wasRunning) sheetOpen = true
+        wasRunning = running
     }
 
     Box(Modifier.fillMaxSize().background(Ink0)) {

@@ -239,6 +239,25 @@ class ImportQueueTest {
     }
 
     @Test
+    fun `运行中提交的任务会被同一轮拾起`() = runQTest {
+        val q = ImportQueue(qScope())
+        q.submit(listOf(task("a")))
+        var submitted = false
+        q.start(ImportQueue.Performer { t, _ ->
+            // 在 a 执行期间追加 b —— 排水式调度应把它纳入本轮
+            if (t.id == "a" && !submitted) {
+                submitted = true
+                q.submit(listOf(task("b")))
+            }
+            ImportOutcome.Success(t.totalBytes)
+        })
+        advanceUntilIdle()
+        val ids = q.tasks.value.map { it.id }.sorted()
+        assertEquals(listOf("a", "b"), ids)
+        assertTrue("任务未全部完成：${q.tasks.value}", q.tasks.value.all { it.state == ImportState.DONE })
+    }
+
+    @Test
     fun `humanSize 格式化`() {
         assertEquals("?", ImportQueue.humanSize(0))
         assertEquals("512 B", ImportQueue.humanSize(512))

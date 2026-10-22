@@ -84,26 +84,46 @@ class DlnaClient(private val network: Network) {
 
         // 逐个抓设备描述，找 ContentDirectory
         for (loc in locations) {
-            val xml = try { httpGetString(loc) } catch (e: Exception) { null } ?: continue
-            deviceDescriptionUrl = loc
-            val name = tagOf(xml, "friendlyName")
-            if (name.isNotEmpty()) friendlyName = name
+            if (connectViaDescription(loc)) return true
+        }
+        return false
+    }
 
-            val types = tagsOf(xml, "serviceType")
-            val ctrls = tagsOf(xml, "controlURL")
-            for (i in types.indices) {
-                val t = types[i]
-                val c = if (i < ctrls.size) absolute(loc, ctrls[i]) else ""
-                if (c.isEmpty()) continue
-                when {
-                    t.contains("ContentDirectory") -> controlUrl = c
-                    t.contains("ConnectionManager") -> connectionManagerUrl = c
-                }
+    /**
+     * 手动指定设备描述地址直连（跳过 SSDP）。
+     *
+     * 用于组播被路由器/热点屏蔽的网络环境 —— SSDP 发不出去但 HTTP 通的场景；
+     * 也便于无相机环境下用模拟服务器做联调。
+     *
+     * @param location 形如 http://192.168.122.1:64321/dd.xml
+     */
+    fun discoverAtLocation(location: String): Boolean {
+        val loc = location.trim().trimEnd('/')
+        val target = if (loc.contains("://")) loc else "http://$loc"
+        return connectViaDescription(target)
+    }
+
+    /** 抓取设备描述并定位 ContentDirectory 控制地址。 */
+    private fun connectViaDescription(loc: String): Boolean {
+        val xml = try { httpGetString(loc) } catch (e: Exception) { null } ?: return false
+        deviceDescriptionUrl = loc
+        val name = tagOf(xml, "friendlyName")
+        if (name.isNotEmpty()) friendlyName = name
+
+        val types = tagsOf(xml, "serviceType")
+        val ctrls = tagsOf(xml, "controlURL")
+        for (i in types.indices) {
+            val t = types[i]
+            val c = if (i < ctrls.size) absolute(loc, ctrls[i]) else ""
+            if (c.isEmpty()) continue
+            when {
+                t.contains("ContentDirectory") -> controlUrl = c
+                t.contains("ConnectionManager") -> connectionManagerUrl = c
             }
-            if (controlUrl.isNotEmpty()) {
-                Log.i(TAG, "DLNA ready: " + friendlyName + "  control=" + controlUrl)
-                return true
-            }
+        }
+        if (controlUrl.isNotEmpty()) {
+            Log.i(TAG, "DLNA ready: " + friendlyName + "  control=" + controlUrl)
+            return true
         }
         return false
     }

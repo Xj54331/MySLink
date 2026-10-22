@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 class ImportService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var collectJob: kotlinx.coroutines.Job? = null
     private var lastRateAt = 0L
     private var lastDone = 0L
 
@@ -39,7 +40,10 @@ class ImportService : Service() {
         startAsForeground()
 
         val manager = (application as SonnyApp).imports
-        scope.launch {
+        // 每次 startForegroundService 都会走到这里：先撤掉上一个收集器，
+        // 否则多次提交会叠加多个 collect 循环，通知被重复刷、协程泄漏。
+        collectJob?.cancel()
+        collectJob = scope.launch {
             var startedAt = System.currentTimeMillis()
             manager.tasks.collect { tasks ->
                 if (tasks.isEmpty()) {
@@ -55,10 +59,13 @@ class ImportService : Service() {
                 }
                 val totalBytes = tasks.sumOf { it.totalBytes.coerceAtLeast(0) }
 
-                // 聚合速率：500ms 窗口
+                // 聚合速率：500ms 窗口；首个样本只记基准，避免除以巨大 dt 产生尖峰
                 val now = System.currentTimeMillis()
                 var rate = 0L
-                if (now - lastRateAt >= 500) {
+                if (lastRateAt == 0L) {
+                    lastRateAt = now
+                    lastDone = doneBytes
+                } else if (now - lastRateAt >= 500) {
                     rate = (doneBytes - lastDone) * 1000L / (now - lastRateAt).coerceAtLeast(1)
                     lastRateAt = now
                     lastDone = doneBytes
