@@ -121,9 +121,10 @@ fun DeviceScreen(
                 Column(Modifier.weight(1f)) {
                     Text(
                         vm.deviceName.ifEmpty { "相机" },
-                        color = TextHi, fontSize = 17.sp,
+                        color = TextHi, fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.Monospace,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
@@ -209,8 +210,8 @@ fun DeviceScreen(
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 116.dp),
                     modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                    // 底部给操作栏留位，否则最后一行点不到
-                    contentPadding = PaddingValues(top = 2.dp, bottom = 116.dp),
+                    // 底部给操作栏 + Tab 栏留位，否则最后一行点不到
+                    contentPadding = PaddingValues(top = 2.dp, bottom = 210.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -258,10 +259,11 @@ fun DeviceScreen(
             }
         }
 
-        // 底部操作栏
+        // 底部操作栏（上移避开 Tab 栏，否则会被 NavigationBar 遮住）
         if (selectMode && groups.isNotEmpty()) {
             Row(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .padding(bottom = 84.dp)
                     .background(Ink1).safeDrawingPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,

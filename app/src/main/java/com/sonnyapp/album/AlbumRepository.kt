@@ -58,6 +58,7 @@ class AlbumRepository(private val context: Context) {
             MediaStore.MediaColumns.HEIGHT,
             MediaStore.MediaColumns.DATA,
         )
+        Log.i(TAG, "query() begin, RELATIVE_PATH sel=LIKE 'Pictures/SonnyLink%'")
         val out = ArrayList<LocalPhoto>()
         try {
             context.contentResolver.query(
@@ -97,6 +98,7 @@ class AlbumRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.w(TAG, "查询相册失败: " + e.message)
         }
+        Log.i(TAG, "query() -> " + out.size + " 张")
         return out
     }
 

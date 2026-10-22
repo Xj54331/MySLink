@@ -117,7 +117,7 @@ fun AlbumScreen(vm: AlbumViewModel = viewModel()) {
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 116.dp),
                     modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                    contentPadding = PaddingValues(top = 2.dp, bottom = 100.dp),
+                    contentPadding = PaddingValues(top = 2.dp, bottom = 200.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {

@@ -170,6 +170,23 @@ class CameraNetwork(private val context: Context) {
         return n
     }
 
+    /**
+     * 采用任意可用网络（Wi-Fi 优先，回退到当前活跃网络）。
+     *
+     * 用于「按地址直连」：这条路径本来就是给非典型网络环境准备的
+     * （组播被屏蔽、USB/以太共享、模拟器等），不该硬性要求存在 Wi-Fi。
+     * 后续所有请求仍走句柄级绑定。
+     */
+    fun adoptAnyNetwork(): Network? {
+        val n = findSystemWifi()
+            ?: try { cm.activeNetwork } catch (e: Exception) { null }
+            ?: return null
+        network = n
+        acquireMulticastLock()
+        Log.i(TAG, "adopted network (any): " + n)
+        return n
+    }
+
     /** 连接相机热点。会弹出系统对话框让用户确认（Android 的既定行为）。 */
     suspend fun connect(ssid: String, passphrase: String?, timeoutMs: Int = 60000): Network =
         suspendCancellableCoroutine { cont ->

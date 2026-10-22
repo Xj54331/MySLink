@@ -214,9 +214,11 @@ class ImportManager(context: Context) {
                 resolver.delete(uri, null, null)
                 return -1L
             }
-            // 写完回填拍摄时间（相册按 DATE_TAKEN 分组）并解除 pending
+            // 写完回填拍摄时间（相册按 DATE_TAKEN 分组）并解除 pending。
+            // 优先用 DLNA item 的 dc:date（相机端权威时间），EXIF 作 fallback ——
+            // 某些转码 JPEG 无 EXIF 时也能正确分组。
             values.clear()
-            val taken = readDateTaken(uri)
+            val taken = parseDate(item.date) ?: readDateTaken(uri)
             if (taken > 0) values.put(MediaStore.MediaColumns.DATE_TAKEN, taken)
             values.put(MediaStore.MediaColumns.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
@@ -225,6 +227,17 @@ class ImportManager(context: Context) {
             Log.w(TAG, "保存失败: " + e.message)
             try { resolver.delete(uri, null, null) } catch (e2: Exception) { }
             -1L
+        }
+    }
+
+    /** DLNA 的 dc:date（ISO 8601）-> epoch 毫秒；解析失败返回 null。 */
+    private fun parseDate(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        return try {
+            val fmt = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
+            fmt.parse(iso.substringBefore('.'))?.time
+        } catch (e: Exception) {
+            null
         }
     }
 

@@ -82,9 +82,11 @@ class DeviceRepository(private val context: Context) {
     suspend fun connectManual(location: String): String? = withContext(Dispatchers.IO) {
         synchronized(log) { log.setLength(0) }
         note("[1/2] 手动直连 " + location)
-        val n = net.adoptSystemWifi()
+        // 手动直连本就是非典型网络环境的备用路径（组播被屏蔽 / USB 共享 / 模拟器），
+        // 不硬性要求存在 Wi-Fi —— 任意可用网络皆可，后续请求全部走句柄级绑定。
+        val n = net.adoptAnyNetwork()
         if (n == null) {
-            return@withContext "没有找到已连接的 Wi-Fi。\n请先连上相机的热点，或确认手机与相机在同一网络。"
+            return@withContext "没有找到可用网络。\n请先连上相机的热点，或确认手机与相机在同一网络。"
         }
         note("[2/2] 抓取设备描述")
         val c = DlnaClient(n)

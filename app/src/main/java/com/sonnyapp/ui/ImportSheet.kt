@@ -78,6 +78,8 @@ fun ImportSheet(
             .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             .background(Ink1)
             .navigationBarsPadding()
+            // Tab 栏占底部 84dp，抽屉内容整体上移避免被遮挡
+            .padding(bottom = 84.dp)
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Row(
